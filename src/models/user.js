@@ -1,24 +1,87 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
     firstName: {
-        type: String
+        type: String,
+        required: true,
+        minLength: 2,
+        maxLength: 50,
+        trim: true,
     },
     lastName: {
-        type: String
+        type: String,
+        minLength: 2,
+        maxLength: 50,
+        trim: true,
     },
     emailId: {
-        type: String
+        type: String,
+        lowercase: true,
+        trim: true,
+        required: true,
+        unique: true,
+        minLength: 2,
+        maxLength: 50,
+        validate(value){
+            if(!validator.isEmail(value)){
+                throw new Error("Email is invalid")
+            }
+        }
     },
     password: {
-        type: String
+        type: String,
+        required: true,
+        minLength: 2,
+        maxLength: 50,
+        trim: true,
+        validate(value){
+            if(!validator.isStrongPassword(value)){
+                throw new Error("Enter a strong password")
+            }
+        }
     },
     age: {
-        type: Number
+        type: Number,
+        min: 18,
     },
     gender: {
-        type: String
+        type: String,
+        validate(value){
+            if(!["male","female","other"].includes(value)){
+                throw new Error("Gender data is invalid")
+            }
+        }
+    },
+    photoUrl: {
+        type: String,
+        default : "https://geographyandyou.com/images/user-profile.png",
+        minLength: 2,
+        maxLength: 100,
+        trim: true,
+        validate(value){
+            if(!validator.isURL(value)){
+                throw new Error("Email is invalid")
+            }
+        }
+    },
+    about:{
+        type: String,
+        default: "This is a default description of the user",
+        maxLength: 1000,
+    },
+    skills:{
+        type: [String],
+        validate(value){
+            if(value.length>10){
+                throw new Error("Skills cannot be more than 10")
+            }
+        }
     }
-});
+    },
+    {
+        timestamps: true,
+    }
+);
 
 module.exports = mongoose.model("User",userSchema);

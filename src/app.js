@@ -1,102 +1,19 @@
 const express =require("express");
 const connectDB = require("./config/database");
 const app=express();
-const User= require("./models/user");
-
-app.use(express.json())
+const cookieParser = require("cookie-parser");
 
 
-app.post("/signup",async (req,res)=>{
-    const user =new User(req.body)
+app.use(express.json());
+app.use(cookieParser());
 
-    try{ 
-        await user.save();
-        res.send("User added successfully")
-    } catch (err){
-        res.status(400).send("Error saving the user: "+ err.message)
-    }
-    
-})
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
 
-app.get("/feed",async (req,res)=>{
-    
-    try{
-        const users= await User.find({})
-        res.send(users)
-    }catch(err){
-        res.status(400).send("Something went wrong")
-    }
-})
-
-app.get("/user", async (req, res)=>{
-    
-    const userEmail = req.body.emailId
-    console.log(userEmail)
-    try{
-        const user = await User.findOne({emailId : userEmail})
-        if(!user){
-            res.status(404).send("User not found")
-        } else{
-            res.send(user)
-
-        }
-
-    } catch(err){
-        res.status(400).send("Something went wrong")
-    }
-})
-
-app.delete("/user", async(req,res)=>{
-
-    const userID = req.body.userID
-    try{
-        const user = await User.findByIdAndDelete(userID)
-
-        res.send("User deleted successfully")
-    } catch (err) {
-        res.status(400).send("Something went wrong")
-    }
-})
-
-app.patch("/user/:userId", async(req,res)=>{
-    const userId = req.params?.userId
-    const data = req.body
-
-    try{
-        const ALLOWED_UPDATES = ["photoUrl","skills","about","gender","age"]
-
-        const isUpdateAllowed = Object.keys(data).every((k)=>
-            ALLOWED_UPDATES.includes(k)
-        )
-        if(!isUpdateAllowed){
-            throw new Error("Update not allowed")
-        }
-
-        const user = await User.findByIdAndUpdate(userId,data,{
-            returnDocument:"after",
-            runValidators:true,
-        })
-        console.log(user)
-        res.send("User updated")
-    } catch(err){
-        res.status(400).send("Update failed: "+err.message)
-    }
-})
-
-app.patch("/user/email", async(req,res)=>{
-    const emailId = req.body.emailId
-    const data = req.body
-
-    try{
-        const user = await User.findOneAndUpdate({ emailId: emailId },data,{
-            returnDocument:"after"
-        })
-        console.log(user)
-        res.send("User updated successfully")
-    } catch(err){
-        res.status(400).send("Something went wrong")
-    }
-})
+app.use("/",authRouter);
+app.use("/",profileRouter);
+app.use("/",requestRouter);
 
 connectDB().then(()=>{
     console.log("Database connected")
@@ -107,4 +24,3 @@ connectDB().then(()=>{
 .catch((err)=>{
     console.log("DB connection failed")
 })
- 
